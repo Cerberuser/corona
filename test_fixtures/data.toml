@@ -187,3 +187,46 @@ definition::Foo {
     c: vec!['\\'', '\\n', '"', '❤'],
 }
 """
+
+[box_issue_1]
+main_type = "Foo"
+support_types = "InnerStruct,InnerEnum"
+definition = """
+#[derive(PartialEq, Debug, Serialize)]
+pub struct Foo {
+  pub boxed_struct: Box<InnerStruct>,
+  pub enum_unit: Box<InnerEnum>,
+  pub enum_tuple: Box<InnerEnum>,
+  pub enum_struct: Box<InnerEnum>,
+  pub num: Box<i64>,
+  pub some: Box<Option<bool>>,
+  pub none: Box<Option<bool>>,
+  pub unit: Box<()>,
+  pub str: Box<str>,
+}
+#[derive(PartialEq, Debug, Serialize)]
+pub struct InnerStruct {
+  pub n: u64,
+}
+#[derive(PartialEq, Debug, Serialize)]
+pub enum InnerEnum {
+  Unit,
+  Tuple(i64),
+  Struct { n: i64 },
+}
+
+
+"""
+value = """
+definition::Foo {
+    boxed_struct: Box::new(definition::InnerStruct {n: 42}),
+	enum_unit: Box::new(definition::InnerEnum::Unit),
+	enum_tuple: Box::new(definition::InnerEnum::Tuple(-42)),
+	enum_struct: Box::new(definition::InnerEnum::Struct {n: 42}),
+	num: Box::new(-42),
+	some: Box::new(Some(true)),
+	none: Box::new(None),
+	unit: Box::new(()),
+	str: "123".into(),
+}
+"""

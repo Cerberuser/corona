@@ -222,6 +222,15 @@
 //! };
 //! ```
 //!
+//! ### Boxed values
+//!
+//! Because `serde` applies `Deref`, there's no way to determine whether an underlying type is
+//! boxed or not. We solve this by emitting `.into()` after most values, which will box the value
+//! if necessary depending on the context.
+//!
+//! This doesn't work perfectly (for instance, it doesn't work for boxed tuples), but it works well
+//! enough to permit boxing of struct, enum, and option values.
+//!
 //! ## Limitations
 //! There are some cases when `uneval` will be unable to generate valid code. Namely:
 //! 1. Since Serde doesn't provide us the full path to the type in question (and in most cases it's simply unable to),
