@@ -36,6 +36,11 @@ impl<W: Write> Uneval<W> {
         Ok(())
     }
 
+    fn dot_into(&mut self) -> SerResult {
+        write!(self.writer, ".into()")?;
+        Ok(())
+    }
+
     fn serialize_item(&mut self, item: impl ser::Serialize) -> SerResult {
         self.comma()?;
         item.serialize(self)?;
@@ -56,87 +61,108 @@ impl<W: Write> ser::Serializer for &mut Uneval<W> {
     type SerializeStructVariant = Self;
 
     fn serialize_bool(self, v: bool) -> SerResult {
-        write!(self.writer, "{}", v)?;
+        write!(self.writer, "({})", v)?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_i8(self, v: i8) -> SerResult {
-        write!(self.writer, "{}i8", v)?;
+        write!(self.writer, "({}i8)", v)?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_i16(self, v: i16) -> SerResult {
-        write!(self.writer, "{}i16", v)?;
+        write!(self.writer, "({}i16)", v)?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_i32(self, v: i32) -> SerResult {
-        write!(self.writer, "{}i32", v)?;
+        write!(self.writer, "({}i32)", v)?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_i64(self, v: i64) -> SerResult {
-        write!(self.writer, "{}i64", v)?;
+        write!(self.writer, "({}i64)", v)?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_i128(self, v: i128) -> SerResult {
-        write!(self.writer, "{}i128", v)?;
+        write!(self.writer, "({}i128)", v)?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_u8(self, v: u8) -> SerResult {
-        write!(self.writer, "{}u8", v)?;
+        write!(self.writer, "({}u8)", v)?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_u16(self, v: u16) -> SerResult {
-        write!(self.writer, "{}u16", v)?;
+        write!(self.writer, "({}u16)", v)?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_u32(self, v: u32) -> SerResult {
-        write!(self.writer, "{}u32", v)?;
+        write!(self.writer, "({}u32)", v)?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_u64(self, v: u64) -> SerResult {
-        write!(self.writer, "{}u64", v)?;
+        write!(self.writer, "({}u64)", v)?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_u128(self, v: u128) -> SerResult {
-        write!(self.writer, "{}u128", v)?;
+        write!(self.writer, "({}u128)", v)?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_f32(self, v: f32) -> SerResult {
-        write!(self.writer, "{}f32", v)?;
+        write!(self.writer, "({}f32)", v)?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_f64(self, v: f64) -> SerResult {
-        write!(self.writer, "{}f64", v)?;
+        write!(self.writer, "({}f64)", v)?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_char(self, v: char) -> SerResult {
         write!(self.writer, "'{}'", v.escape_default().collect::<String>())?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_str(self, v: &str) -> SerResult {
-        write!(self.writer, "\"{}\".into()", v.escape_default().collect::<String>())?;
+        write!(
+            self.writer,
+            "\"{}\"",
+            v.escape_default().collect::<String>()
+        )?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_bytes(self, v: &[u8]) -> SerResult {
         self.collect_seq(v)?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_none(self) -> SerResult {
         write!(self.writer, "None")?;
+        self.dot_into()?;
         Ok(())
     }
 
@@ -147,16 +173,19 @@ impl<W: Write> ser::Serializer for &mut Uneval<W> {
         write!(self.writer, "Some(")?;
         value.serialize(&mut *self)?;
         write!(self.writer, ")")?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_unit(self) -> SerResult {
         write!(self.writer, "()")?;
+        self.dot_into()?;
         Ok(())
     }
 
     fn serialize_unit_struct(self, name: &'static str) -> SerResult {
         write!(self.writer, "{}", name)?;
+        self.dot_into()?;
         Ok(())
     }
 
@@ -167,6 +196,7 @@ impl<W: Write> ser::Serializer for &mut Uneval<W> {
         variant: &'static str,
     ) -> SerResult {
         write!(self.writer, "{}::{}", name, variant)?;
+        self.dot_into()?;
         Ok(())
     }
 
@@ -177,6 +207,7 @@ impl<W: Write> ser::Serializer for &mut Uneval<W> {
         write!(self.writer, "{}(", name)?;
         value.serialize(&mut *self)?;
         write!(self.writer, ")")?;
+        self.dot_into()?;
         Ok(())
     }
 
@@ -193,6 +224,7 @@ impl<W: Write> ser::Serializer for &mut Uneval<W> {
         write!(self.writer, "{}::{}(", name, variant)?;
         value.serialize(&mut *self)?;
         write!(self.writer, ")")?;
+        self.dot_into()?;
         Ok(())
     }
 
@@ -267,6 +299,7 @@ impl<W: Write> ser::SerializeSeq for &mut Uneval<W> {
 
     fn end(self) -> SerResult {
         write!(self.writer, "].into_iter().collect()")?;
+        // Note: no .into() after collect, because types cannot be inferred.
         self.inside = true;
         Ok(())
     }
@@ -284,6 +317,7 @@ impl<W: Write> ser::SerializeTuple for &mut Uneval<W> {
 
     fn end(self) -> SerResult {
         write!(self.writer, ")) }}")?;
+        // Note: .into() doesn't work for tuples
         self.inside = true;
         Ok(())
     }
@@ -301,6 +335,7 @@ impl<W: Write> ser::SerializeTupleStruct for &mut Uneval<W> {
 
     fn end(self) -> SerResult {
         write!(self.writer, ")")?;
+        self.dot_into()?;
         self.inside = true;
         Ok(())
     }
@@ -318,6 +353,7 @@ impl<W: Write> ser::SerializeTupleVariant for &mut Uneval<W> {
 
     fn end(self) -> SerResult {
         write!(self.writer, ")")?;
+        self.dot_into()?;
         self.inside = true;
         Ok(())
     }
@@ -348,6 +384,7 @@ impl<W: Write> ser::SerializeMap for &mut Uneval<W> {
 
     fn end(self) -> SerResult {
         write!(self.writer, "].into_iter().collect()")?;
+        // Note: no .into() after collect, because types cannot be inferred.
         self.inside = true;
         Ok(())
     }
@@ -372,6 +409,7 @@ impl<W: Write> ser::SerializeStruct for &mut Uneval<W> {
 
     fn end(self) -> SerResult {
         write!(self.writer, "}}")?;
+        self.dot_into()?;
         self.inside = true;
         Ok(())
     }
@@ -396,6 +434,7 @@ impl<W: Write> ser::SerializeStructVariant for &mut Uneval<W> {
 
     fn end(self) -> SerResult {
         write!(self.writer, "}}")?;
+        self.dot_into()?;
         self.inside = true;
         Ok(())
     }
